@@ -77,7 +77,7 @@ var dLib = function () {
         },
 
         randPointNear: function (point, distance) {
-            var start = { x: (point.x - 50) + > 0 ? point.x : 0, y: (point.y - 50) > 0 ? point.y : 0 };
+            var start = { x: (point.x - 50) > 0 ? (point.x - 50) : 0, y: (point.y - 50) > 0 ? (point.y - 50) : 0 };
             return {  x: (start.x + this.randInt(100)) % sizeX, y: (start.y + this.randInt(100)) % sizeY };
         }
     };
