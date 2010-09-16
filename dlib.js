@@ -2,6 +2,8 @@ var dLib = function () {
     var canvas, context, sizeX, sizeY;
     var lastPoint = {};
 
+    //var shape = 
+
     return {
         eachNode: function walk(node, func) {
             func(node);
@@ -23,10 +25,13 @@ var dLib = function () {
         },
 
         setup: function (width, height) {
-            sizeX = width || 1000; sizeY = height || 600;
+            width = width || getComputedStyle(document.getElementsByTagName('body')[0], "").getPropertyValue('width');
+            height = height || "500px"; // getComputedStyle(document.getElementsByTagName('body')[0], "").getPropertyValue('height');
             canvas = this.appendTag("canvas", "body");
-            canvas.setAttribute('width', sizeX);
-            canvas.setAttribute('height', sizeY);
+            canvas.setAttribute('width', width);
+            canvas.setAttribute('height', height);
+            canvas.setAttribute('style', "border: 1px #000 solid");
+            sizeX = parseInt(width); sizeY = parseInt(height);
             context = canvas.getContext('2d');
             return this;
         },
@@ -41,9 +46,27 @@ var dLib = function () {
             return this;
         },
 
-        randCircle: function () {
-
+        randCircle: function (max) {
+            maxRadius =  max || 100;
+            context || this.setup();
+            var randInt = this.randInt;
+            context.beginPath();
+            context.arc(randInt(sizeX), randInt(sizeY), randInt(maxRadius), 0, Math.PI*2, true); 
+            context.closePath();
+            this.randFill();
+            context.fill();            
+            return this;
         },
+
+        drawRect: function (x, y, width, height) {
+            context.fillRect(x, y, width, height);
+            return this;
+        },
+
+        drawCircle: function (x, y, radius) {
+            context.arc(x, y, radius, 0, Math.PI*2, true);
+            return this;
+        }, 
 
         randRect: function (max) {
             max = max || 100;
@@ -61,20 +84,37 @@ var dLib = function () {
             return this;
         },
 
-        randPath: function () {
-            if (!lastPoint.x || !lastPoint.y) {
-                lastPoint.x = this.randInt(sizeX);
-                lastPoint.y = this.randInt(sizeY);
+        drawPath: function (toPoint, fromPoint) {
+            if (fromPoint === undefined) {
+                fromPoint = lastPoint;
+            }
+            if (fromPoint.x === undefined || fromPoint.y === undefined) {
+                throw "Oops";
+            }
+            if (fromPoint !== lastPoint) { 
                 context.beginPath();
-                context.moveTo(lastPoint.x, lastPoint.y);
+                context.moveTo(fromPoint.x, fromPoint.y);
             }
 
-            var newPoint = this.randPointNear(lastPoint);
-            context.lineTo(newPoint.x, newPoint.y);
-            lastPoint = newPoint;
+            context.lineTo(toPoint.x, toPoint.y);
+            lastPoint.x = toPoint.x; lastPoint.y = toPoint.y;
             context.stroke();
             return this;
         },
+
+        randPath: function () {
+            if (lastPoint.x === undefined || lastPoint.y === undefined) {
+                lastPoint.x = this.randInt(sizeX);
+                lastPoint.y = this.randInt(sizeY);
+                console.log("In randPath(): lastPoint set to: " + lastPoint.x +", "+lastPoint.y);
+            }
+            this.drawPath(this.randPointNear(lastPoint));
+            return this;
+        },
+
+        lastPoint: function () { return lastPoint; },
+
+        canvasSize: function () { return {x:sizeX, y: sizeY}},
 
         randPointNear: function (point, distance) {
             var start = { x: (point.x - 50) > 0 ? (point.x - 50) : 0, y: (point.y - 50) > 0 ? (point.y - 50) : 0 };
