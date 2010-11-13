@@ -1,39 +1,68 @@
+// dLib.js
+//
+// A small library to help with 
+//
+// Copyright (c) 2010 Harry Dean Hudson Jr., <dean@ero.com>
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+// *****
+// * Top-level module
 var dLib = function () {
+
     var canvas, context, sizeX, sizeY;
     var lastPoint = {};
-    // shapes need to respond to the draw method
+
+    // *****
+    // * +shapes+ is used internally by the core Core.draw() method: Core.draw()
+    // * steps through the array and calls update() and draw() on each shape.
+    // * Push shape objects onto this array in factory methods.
     var shapes = [];
 
-    return {
-        eachNode: function walk(node, func) {
-            func(node);
-            node = node.firstChild;
-            while (node) {
-                walk(node, func);
-                node = node.nextSibling;
-            };
-        },
-            
-        replace: function (id, text) {
-            var node = document.getElementById(id);
-            node.firstChild.nodeValue = text;
-            return node;
-        },
-    
-        appendTag: function (what, to) {
-            return document.getElementsByTagName(to)[0].appendChild(document.createElement(what));
-        },
+    // *****
+    // * Private methods    
+    var appendTag = function (what, to) {
+        return document.getElementsByTagName(to)[0].
+            appendChild(document.createElement(what));
+    };
 
+    // *****
+    // * Modules
+    var helpers = {};
+    var behavior = {};
+
+    // *****
+    // * dLib.Core: main functionality, exported under dLib
+    var core = {
         setup: function (width, height) {
-            width = width || getComputedStyle(document.getElementsByTagName('body')[0], "").getPropertyValue('width');
-            height = height || "500px"; // getComputedStyle(document.getElementsByTagName('body')[0], "").getPropertyValue('height');
-            canvas = this.appendTag("canvas", "body");
+            width = width || 
+                    getComputedStyle(document.getElementsByTagName('body')[0], "").
+                    getPropertyValue('width');
+            height = height || "500px";
+            canvas = appendTag("canvas", "body");
             canvas.setAttribute('width', width);
             canvas.setAttribute('height', height);
-            canvas.setAttribute('style', "border: 1px #000 solid");
+            canvas.setAttribute('id', 'canvas');
+            //canvas.setAttribute('style', "border: 1px #000 solid");
             sizeX = parseInt(width); sizeY = parseInt(height);
             context = canvas.getContext('2d');
-            return this;
+            return canvas;
         },
 
         randInt: function (max) {
@@ -42,8 +71,9 @@ var dLib = function () {
 
         randFill: function () {
             context || this.setup();
-            var fill = "rgba(" + this.randInt(255) + ',' + this.randInt(255) + ',' + this.randInt(255) + ',1.0)';
-            //context.fillStyle = fill;
+            var fill = "rgba(" + this.randInt(255) + ',' + 
+                                 this.randInt(255) + ',' + 
+                                 this.randInt(255) + ',1.0)';
             return fill;
         },
 
@@ -72,8 +102,12 @@ var dLib = function () {
             maxRadius =  max || 100;
             context || this.setup();
             var randInt = this.randInt;
-            this.newCircle(randInt(sizeX), randInt(sizeY), randInt(maxRadius), this.randFill()).draw(); 
-            return this;
+            var circle =  this.newCircle(randInt(sizeX),
+                                  randInt(sizeY),
+                                  randInt(maxRadius),
+                                  this.randFill());
+            circle.draw();
+            return circle;
         },
 
         drawRect: function (x, y, width, height) {
@@ -84,13 +118,14 @@ var dLib = function () {
         drawCircle: function (x, y, radius) {
             context.arc(x, y, radius, 0, Math.PI*2, true);
             return this;
-        }, 
+        },
 
         randRect: function (max) {
             max = max || 100;
             context || this.setup();
             var randInt = this.randInt;
-            context.fillRect(randInt(sizeX), randInt(sizeY), randInt(max), randInt(max));
+            context.fillRect(randInt(sizeX), randInt(sizeY), 
+                             randInt(max), randInt(max));
             return this;
         },
 
@@ -124,7 +159,8 @@ var dLib = function () {
             if (lastPoint.x === undefined || lastPoint.y === undefined) {
                 lastPoint.x = this.randInt(sizeX);
                 lastPoint.y = this.randInt(sizeY);
-                console.log("In randPath(): lastPoint set to: " + lastPoint.x +", "+lastPoint.y);
+                console.log("In randPath(): lastPoint set to: " + 
+                             lastPoint.x +", "+lastPoint.y);
             }
             this.drawPath(this.randPointNear(lastPoint));
             return this;
@@ -134,28 +170,33 @@ var dLib = function () {
 
         canvasSize: function () { return {x:sizeX, y: sizeY}},
 
-        shapes: function () { return shapes; },
+        shapes: function () { return shapes.slice(); },
 
         context: function () { return context; },
 
         randPointNear: function (point, distance) {
             dist = distance || 50;
-            var start = { x: (point.x - dist) > 0 ? (point.x - dist) : 0, y: (point.y - dist) > 0 ? (point.y - dist) : 0 };
-            return {  x: (start.x + this.randInt(dist * 2)) % sizeX, y: (start.y + this.randInt(dist * 2)) % sizeY };
+            var start = { 
+                 x: (point.x - dist) > 0 ? (point.x - dist) : 0, 
+                 y: (point.y - dist) > 0 ? (point.y - dist) : 0 
+            };
+            return {  
+                 x: (start.x + this.randInt(dist * 2)) % sizeX, 
+                 y: (start.y + this.randInt(dist * 2)) % sizeY 
+            };
         },
 
         trackMouse: function (obj) {
             return function (e) {
                 if (!e) var e = window.event;
-                if (e.pageX || e.pageY) 	{
+                if (e.pageX || e.pageY) {
                     obj.mouseX = e.pageX;
                     obj.mouseY = e.pageY;
-                }
-                else if (e.clientX || e.clientY) 	{
+                } else if (e.clientX || e.clientY) 	{
                     obj.mouseX = e.clientX + document.body.scrollLeft
-			+ document.documentElement.scrollLeft;
+		        + document.documentElement.scrollLeft;
                     obj.mouseY = e.clientY + document.body.scrollTop
-			+ document.documentElement.scrollTop;
+		        + document.documentElement.scrollTop;
                 }
             };
         },
@@ -177,4 +218,6 @@ var dLib = function () {
             }
         }
     };
+
+    return core;
 }();
