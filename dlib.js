@@ -50,11 +50,15 @@ var dLib = function () {
     // *****
     // * dLib.Core: main functionality, exported under dLib
     var core = {
+
+        // *****
+        // * Sets up +canvas+ and +context+ objects for drawing and inserts
+        // * them into the DOM
         setup: function (width, height) {
             width = width || 
                     getComputedStyle(document.getElementsByTagName('body')[0], "").
                     getPropertyValue('width');
-            height = height || "500px";
+            height = height || window.outerHeight;
             canvas = appendTag("canvas", "body");
             canvas.setAttribute('width', width);
             canvas.setAttribute('height', height);
@@ -65,10 +69,14 @@ var dLib = function () {
             return canvas;
         },
 
+        // *****
+        // * Returns a random integer between 0 and +max+
         randInt: function (max) {
             return Math.floor(Math.random()*max);
         },
 
+        // *****
+        // * Returns a random rgba string usable in the Canvas API
         randFill: function () {
             context || this.setup();
             var fill = "rgba(" + this.randInt(255) + ',' + 
@@ -77,6 +85,9 @@ var dLib = function () {
             return fill;
         },
 
+        // *****
+        // * Circle factory class. Generates a circle, sets up its
+        // * draw() method, and pushes it ontp the +shapes+ array
         newCircle: function (startX, startY, startRad, startFill) {
             var circle = {
                 x: startX,
@@ -98,6 +109,8 @@ var dLib = function () {
             return circle;
         },
 
+        // *****
+        // * Creates and draws a random circle of +max+ radius
         randCircle: function (max) {
             maxRadius =  max || 100;
             context || this.setup();
@@ -110,16 +123,9 @@ var dLib = function () {
             return circle;
         },
 
-        drawRect: function (x, y, width, height) {
-            context.fillRect(x, y, width, height);
-            return this;
-        },
-
-        drawCircle: function (x, y, radius) {
-            context.arc(x, y, radius, 0, Math.PI*2, true);
-            return this;
-        },
-
+        // *****
+        // * Creates and draws a random rectangle with width and
+        // * height less than +max+
         randRect: function (max) {
             max = max || 100;
             context || this.setup();
@@ -129,14 +135,22 @@ var dLib = function () {
             return this;
         },
 
-        rotate: function (angle) {
-            context.translate(85, 0);  
-            context.rotate(angle * Math.PI / 180);    
-            context.rotate(angle);
-            context.save();
+        // *****
+        // * Draws a rectangle to the canvas
+        drawRect: function (x, y, width, height) {
+            context.fillRect(x, y, width, height);
             return this;
         },
 
+        // *****
+        // * Draws a circle to the canvas
+        drawCircle: function (x, y, radius) {
+            context.arc(x, y, radius, 0, Math.PI*2, true);
+            return this;
+        },
+
+        // *****
+        // *
         drawPath: function (toPoint, fromPoint) {
             if (fromPoint === undefined) {
                 fromPoint = lastPoint;
@@ -155,6 +169,20 @@ var dLib = function () {
             return this;
         },
 
+
+        // *****
+        // Rotates the canvas by +angle+ degrees
+        rotate: function (angle) {
+            context.translate(85, 0);  
+            context.rotate(angle * Math.PI / 180);    
+            context.rotate(angle);
+            context.save();
+            return this;
+        },
+
+        // ******
+        // * Generates a straight path between +lastPoint+ and a random
+        // * point on the canvas
         randPath: function () {
             if (lastPoint.x === undefined || lastPoint.y === undefined) {
                 lastPoint.x = this.randInt(sizeX);
@@ -166,14 +194,27 @@ var dLib = function () {
             return this;
         },
 
+        // *****
+        // * Accessor for +lastPoint+. Used for creating paths over
+        // * draw() iterations
         lastPoint: function () { return lastPoint; },
 
+        // *****
+        // * Return the +canvas+ size as a hash
         canvasSize: function () { return {x:sizeX, y: sizeY}},
 
+        // *****
+        // * Accessor for +shapes+, returns a copy
         shapes: function () { return shapes.slice(); },
 
+        // *****
+        // * Accessor for +context+
         context: function () { return context; },
 
+        // *****
+        // * Generates a random point within a square bounding box
+        // * with +distance+ sides of +point+. Both +point+ and the
+        // * return value respond to x and y
         randPointNear: function (point, distance) {
             dist = distance || 50;
             var start = { 
@@ -186,6 +227,10 @@ var dLib = function () {
             };
         },
 
+        // *****
+        // * Update the document (or other DOM object) with
+        // * +mouseX+ and +mouseY+. Needs to be set as an event
+        // * handler.
         trackMouse: function (obj) {
             return function (e) {
                 if (!e) var e = window.event;
@@ -201,6 +246,10 @@ var dLib = function () {
             };
         },
 
+        // *****
+        // * Clears the canvas and then steps through all the 
+        // * objects in the +shapes+ array and
+        // * calls update() and draw() on them if defined.
         draw: function () {
             var i = 0;
             var shape;
